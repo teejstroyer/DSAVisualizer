@@ -4,10 +4,11 @@
 
 [sub_resource type="LabelSettings" id="LabelSettings_ptdpk"]
 font_size = 20
-font_color = Color(0, 1, 0, 1)
 
-[node name="SortingAlgorithm" type="Node2D" node_paths=PackedStringArray("StatLabel", "SpeedDownButton", "SpeedUpButton", "AlgorithmList", "SwapsOrComparisons")]
+[node name="SortingAlgorithm" type="Node2D" node_paths=PackedStringArray("CountInput", "ResetButton", "StatLabel", "SpeedDownButton", "SpeedUpButton", "AlgorithmList", "SwapsOrComparisons")]
 script = ExtResource("1_orrtr")
+CountInput = NodePath("Container/CountInput")
+ResetButton = NodePath("Container/ResetButton")
 Size = Vector2(1000, 500)
 StatLabel = NodePath("Container/Label")
 CompareSwaps = true
@@ -31,35 +32,55 @@ offset_left = 8.0
 offset_top = 8.0
 offset_right = 79.0
 offset_bottom = 39.0
-text = "COUNT"
+text = "Stat"
 label_settings = SubResource("LabelSettings_ptdpk")
+
+[node name="CountInput" type="SpinBox" parent="Container"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 40.0
+offset_right = 160.0
+offset_bottom = 71.0
+min_value = 5.0
+max_value = 100000.0
+value = 100.0
+prefix = "N:"
 
 [node name="SpeedDown" type="Button" parent="Container"]
 layout_mode = 2
 offset_left = 8.0
-offset_top = 40.0
-offset_right = 73.0
-offset_bottom = 80.0
+offset_top = 80.0
+offset_right = 112.0
+offset_bottom = 112.0
 text = "Speed -"
 
 [node name="SpeedUp" type="Button" parent="Container"]
 layout_mode = 2
-offset_left = 80.0
-offset_top = 40.0
-offset_right = 149.0
-offset_bottom = 80.0
+offset_left = 120.0
+offset_top = 80.0
+offset_right = 224.0
+offset_bottom = 112.0
 text = "Speed +"
 
 [node name="Algorithms" type="OptionButton" parent="Container"]
 layout_mode = 2
 offset_left = 8.0
-offset_top = 88.0
+offset_top = 160.0
 offset_right = 224.0
-offset_bottom = 128.0
+offset_bottom = 192.0
 
 [node name="ComparisonsOrSwaps" type="OptionButton" parent="Container"]
 layout_mode = 0
 offset_left = 8.0
-offset_top = 136.0
-offset_right = 200.0
-offset_bottom = 176.0
+offset_top = 120.0
+offset_right = 224.0
+offset_bottom = 152.0
+
+[node name="ResetButton" type="Button" parent="Container"]
+layout_mode = 0
+offset_left = 168.0
+offset_top = 40.0
+offset_right = 224.0
+offset_bottom = 72.0
+text = "Reset
+"

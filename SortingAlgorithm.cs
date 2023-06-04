@@ -7,7 +7,10 @@ using SAG = SortingAlgorithmDictionary;
 public partial class SortingAlgorithm : Node2D
 {
     [Export]
-    public int Count { get; set; } = 100;
+    public SpinBox CountInput { get; set; }
+
+    [Export]
+    public Button ResetButton { get; set; }
 
     [Export]
     public bool UseViewPortSize { get; set; } = true;
@@ -35,6 +38,8 @@ public partial class SortingAlgorithm : Node2D
 
     [Export]
     public OptionButton SwapsOrComparisons { get; set; }
+
+    private int _count { get => (int)CountInput.Value; }
 
     private float _width;
     private float _height;
@@ -76,36 +81,45 @@ public partial class SortingAlgorithm : Node2D
             if (DelayInSeconds <= 0) SpeedUpButton.Disabled = true;
         };
 
-        foreach (var algo in Enum.GetValues(typeof(SortingAlgorithms)))
-        {
-            AlgorithmList.AddItem(algo.ToString());
-        }
-
+        SAG.Instance.Keys.ToList().ForEach(i => AlgorithmList.AddItem(i.ToString()));
+        AlgorithmList.Selected = -1;
         AlgorithmList.ItemSelected += (long index) =>
         {
-            SortingAlgorithms algorithmType = (SortingAlgorithms)index;
-            Reset(algorithmType);
+            if (Enum.TryParse(AlgorithmList.Text, out SortingAlgorithmType algorithmType))
+            {
+                Reset(algorithmType);
+            }
         };
 
         SwapsOrComparisons.AddItem("Swaps");
         SwapsOrComparisons.AddItem("Comparisons");
         SwapsOrComparisons.Selected = CompareSwaps ? 0 : 1;
-
         SwapsOrComparisons.ItemSelected += (long index) =>
         {
             CompareSwaps = index == 0;
-            Reset(AlgorithmList.Selected == -1 ? SortingAlgorithms.None : (SortingAlgorithms)AlgorithmList.Selected);
+            if (Enum.TryParse(AlgorithmList.Text, out SortingAlgorithmType algorithmType))
+            {
+                Reset(algorithmType);
+            }
+        };
+
+        ResetButton.Pressed += () =>
+        {
+            if (Enum.TryParse(AlgorithmList.Text, out SortingAlgorithmType algorithmType))
+            {
+                Reset(algorithmType);
+            }
         };
     }
 
-    private void Reset(SortingAlgorithms algorithmType)
+    private void Reset(SortingAlgorithmType algorithmType)
     {
         InitializeDataAndShuffle();
 
-        if (algorithmType != SortingAlgorithms.None)
+        if (algorithmType != SortingAlgorithmType.None)
         {
             SAG.Instance[algorithmType].Sort(_data.Clone() as int[], _data.Length, out _comparrisons, out _swaps);
-            StatLabel.Text = $"{algorithmType.ToString()} {Count}ct "
+            StatLabel.Text = $"{algorithmType.ToString()} "
             + $"Swaps: {_swaps.Count / 2} "
             + $"Comparrisons: {_comparrisons.Count / 2}";
         }
@@ -115,18 +129,17 @@ public partial class SortingAlgorithm : Node2D
         }
     }
 
-
     private void InitializeDataAndShuffle()
     {
         _comparrisons.Clear();
         _swaps.Clear();
         _currentSwap = 0;
         _currentComparrison = 0;
-        _data = Enumerable.Range(0, Count).ToArray();
+        _data = Enumerable.Range(0, _count).ToArray();
         var random = new Random();
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < _count; i++)
         {
-            var j = random.Next(0, Count);
+            var j = random.Next(0, _count);
             var temp = _data[i];
             _data[i] = _data[j];
             _data[j] = temp;
@@ -169,12 +182,12 @@ public partial class SortingAlgorithm : Node2D
     public override void _Draw()
     {
         if (_data.Length == 0 || _data == null) return;
-        var width = _width / Count * .8;
-        var spacer = _width / Count * .2;
+        var width = _width / _data.Length * .8;
+        var spacer = _width / _data.Length * .2;
 
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < _data.Length; i++)
         {
-            var height = (_data[i] + 1) / ((float)Count + 1) * _height;
+            var height = (_data[i] + 1) / ((float)_count + 1) * _height;
             var x = i * (width + spacer);
             var y = _height - height;
 

@@ -11,9 +11,9 @@ config_version=5
 [application]
 
 config/name="DSAVisualizer"
-config/features=PackedStringArray("4.0", "Forward Plus")
+config/features=PackedStringArray("4.0", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
 [dotnet]
 
-project/assembly_name="DSA"
+project/assembly_name="DSAVisualizer"

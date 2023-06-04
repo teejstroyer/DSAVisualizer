@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 
-public enum SortingAlgorithms
+public enum SortingAlgorithmType
 {
     None,
     BubbleSort,
@@ -14,23 +15,24 @@ public enum SortingAlgorithms
 
 public sealed class SortingAlgorithmDictionary
 {
-    private Dictionary<SortingAlgorithms,ISortingAlgorithm> Dictionary = new Dictionary<SortingAlgorithms, ISortingAlgorithm>()
+    private readonly Dictionary<SortingAlgorithmType, ISortingAlgorithm> Dictionary = new Dictionary<SortingAlgorithmType, ISortingAlgorithm>()
     {
-        {SortingAlgorithms.BubbleSort, new BubbleSort()},
-        {SortingAlgorithms.InsertionSort, new InsertionSort()},
-        {SortingAlgorithms.SelectionSort, new SelectionSort()},
+        {SortingAlgorithmType.BubbleSort, new BubbleSort()},
+        {SortingAlgorithmType.InsertionSort, new InsertionSort()},
+        {SortingAlgorithmType.SelectionSort, new SelectionSort()},
     };
 
     private static readonly SortingAlgorithmDictionary _instance = new SortingAlgorithmDictionary();
 
-    public static SortingAlgorithmDictionary Instance { get  => _instance; }
+    public static SortingAlgorithmDictionary Instance { get => _instance; }
 
-    public ISortingAlgorithm this[SortingAlgorithms key]
+    public ISortingAlgorithm this[SortingAlgorithmType key]
     {
         get
         {
             return Dictionary[key];
         }
     }
+    public IEnumerable<SortingAlgorithmType> Keys { get => Dictionary.Keys.OrderBy(i => i); }
 }
 
