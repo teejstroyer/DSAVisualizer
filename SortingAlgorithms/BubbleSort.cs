@@ -1,12 +1,11 @@
-using System.Collections.Generic;
 
-public  class BubbleSort : ISortingAlgorithm
+public class BubbleSort : ISortingAlgorithm
 {
-    public void Sort(int[] arr, int n, out List<int> comparrisons, out List<int> swaps)
-    {
-        swaps = new List<int>();
-        comparrisons = new List<int>();
+    public event Notify Swapped;
+    public event Notify Compared;
 
+    public void Sort(int[] arr, int n)
+    {
         int i, j;
         bool swapped;
         for (i = 0; i < n - 1; i++)
@@ -14,14 +13,13 @@ public  class BubbleSort : ISortingAlgorithm
             swapped = false;
             for (j = 0; j < n - i - 1; j++)
             {
-                comparrisons.Add(j);
-                comparrisons.Add(j+1);
+                Compared?.Invoke(j, j + 1);
+
                 if (arr[j] > arr[j + 1])
                 {
 
                     arr.Swap(j, j + 1);
-                    swaps.Add(j+1);
-                    swaps.Add(j);
+                    Swapped?.Invoke(j, j + 1);
                     swapped = true;
                 }
             }

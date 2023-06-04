@@ -1,7 +1,9 @@
-using System.Collections.Generic;
+public delegate void Notify(int i, int j);
 
 public interface ISortingAlgorithm
 {
-    public void Sort(int[] arr, int n, out List<int> comparrisons, out List<int> swaps);
+    public void Sort(int[] arr, int n);
+    public event Notify Swapped;
+    public event Notify Compared;
 }
 

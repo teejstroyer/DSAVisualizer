@@ -1,7 +1,7 @@
 using Godot;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using SAG = SortingAlgorithmDictionary;
 
 public partial class SortingAlgorithm : Node2D
@@ -40,17 +40,13 @@ public partial class SortingAlgorithm : Node2D
     public OptionButton SwapsOrComparisons { get; set; }
 
     private int _count { get => (int)CountInput.Value; }
-
     private float _width;
     private float _height;
     private int[] _data = new int[0];
-    private List<int> _comparrisons = new List<int>();
-    private List<int> _swaps = new List<int>();
-    private double _timeSinceLastDelay = 0;
-    private int _currentSwap = 0;
-    private int _currentComparrison = 0;
     private int _pointer1 = 0;
     private int _pointer2 = 0;
+    private int _swapCount = 0;
+    private int _compareCount = 0;
 
     public override void _Ready()
     {
@@ -63,11 +59,16 @@ public partial class SortingAlgorithm : Node2D
         _width = Size.X;
         _height = Size.Y;
 
+        InitializeHandlers();
+    }
+
+    private void InitializeHandlers()
+    {
         SpeedDownButton.Pressed += () =>
         {
             if (DelayInSeconds <= 0) SpeedUpButton.Disabled = false;
 
-            DelayInSeconds = DelayInSeconds + .05 > 1 ? 1 : DelayInSeconds + .05;
+            DelayInSeconds = DelayInSeconds + .02 > 1 ? 1 : DelayInSeconds + .02;
 
             if (DelayInSeconds >= 1) SpeedDownButton.Disabled = true;
         };
@@ -76,7 +77,7 @@ public partial class SortingAlgorithm : Node2D
         {
             if (DelayInSeconds >= 1) SpeedDownButton.Disabled = false;
 
-            DelayInSeconds = DelayInSeconds - .05 < 0 ? 0 : DelayInSeconds - .05;
+            DelayInSeconds = DelayInSeconds - .02 < .02 ? .02 : DelayInSeconds - .02;
 
             if (DelayInSeconds <= 0) SpeedUpButton.Disabled = true;
         };
@@ -112,29 +113,31 @@ public partial class SortingAlgorithm : Node2D
         };
     }
 
-    private void Reset(SortingAlgorithmType algorithmType)
-    {
-        InitializeDataAndShuffle();
+    private void UpdateStats() => StatLabel.Text = $"{AlgorithmList.Text} Swaps:{_swapCount,2} Comparisons:{_compareCount,2}";
 
-        if (algorithmType != SortingAlgorithmType.None)
-        {
-            SAG.Instance[algorithmType].Sort(_data.Clone() as int[], _data.Length, out _comparrisons, out _swaps);
-            StatLabel.Text = $"{algorithmType.ToString()} "
-            + $"Swaps: {_swaps.Count / 2} "
-            + $"Comparrisons: {_comparrisons.Count / 2}";
-        }
-        else
-        {
-            StatLabel.Text = "Select an algorithm";
-        }
+    private void HandleSwap(int i, int j)
+    {
+        Task.Delay((int)(DelayInSeconds * 1000)).Wait();
+        _swapCount++;
+        _pointer1 = i;
+        _pointer2 = j;
+        _data.Swap(i, j);
+        QueueRedraw();
+        UpdateStats();
+    }
+
+    private void HandleComparison(int i, int j)
+    {
+        Task.Delay((int)(DelayInSeconds * 1000)).Wait();
+        _compareCount++;
+        _pointer1 = i;
+        _pointer2 = j;
+        QueueRedraw();
+        UpdateStats();
     }
 
     private void InitializeDataAndShuffle()
     {
-        _comparrisons.Clear();
-        _swaps.Clear();
-        _currentSwap = 0;
-        _currentComparrison = 0;
         _data = Enumerable.Range(0, _count).ToArray();
         var random = new Random();
         for (int i = 0; i < _count; i++)
@@ -146,38 +149,34 @@ public partial class SortingAlgorithm : Node2D
         }
     }
 
-    public override void _Process(double delta)
+    private void Reset(SortingAlgorithmType algorithmType)
     {
-        _timeSinceLastDelay += delta;
-        if (_timeSinceLastDelay >= DelayInSeconds && _currentSwap < _swaps.Count && _currentComparrison < _comparrisons.Count)
+        InitializeDataAndShuffle();
+        QueueRedraw();
+
+        _pointer1 = 0;
+        _pointer2 = 0;
+        _swapCount = 0;
+        _compareCount = 0;
+
+        if (algorithmType != SortingAlgorithmType.None)
         {
-            _timeSinceLastDelay = 0;
-            QueueRedraw();
+            var alg = SAG.Instance[algorithmType];
 
-            var i = _swaps[_currentSwap];
-            var j = _swaps[_currentSwap + 1];
+            alg.Swapped += (int i, int j) => HandleSwap(i, j);
 
-            _pointer1 = CompareSwaps ? i : _comparrisons[_currentComparrison];
-            _pointer2 = CompareSwaps ? j : _comparrisons[_currentComparrison + 1];
+            if (!CompareSwaps) alg.Compared += (int i, int j) => HandleComparison(i, j);
 
-            if (CompareSwaps)
-            {
-                //No need to keep up with comparrisons if we only care about swaps
-                _currentSwap += 2;
-                this.Swap(_data, i, j);
-                return;
-            }
-
-            if ((_comparrisons[_currentComparrison + 1] == i && _comparrisons[_currentComparrison] == j)
-                || (_comparrisons[_currentComparrison + 1] == j && _comparrisons[_currentComparrison] == i))
-            {
-                _currentSwap += 2;
-                this.Swap(_data, i, j);
-            }
-            _currentComparrison += 2;
-
+            Task.Run(() => alg.Sort(_data.Clone() as int[], _data.Length));
+            UpdateStats();
+        }
+        else
+        {
+            StatLabel.Text = "Select an algorithm";
         }
     }
+
+    public override void _Process(double delta) { }
 
     public override void _Draw()
     {
@@ -191,22 +190,12 @@ public partial class SortingAlgorithm : Node2D
             var x = i * (width + spacer);
             var y = _height - height;
 
-            if (i > 2 && (i == _pointer1 || i == _pointer2))
+            if (i == _pointer1 || i == _pointer2)
             {
                 DrawRect(new Rect2((float)x - (float)spacer, 0, (float)width + (float)(2 * spacer), _height), Colors.Red);
             }
 
             DrawRect(new Rect2((float)x, y, (float)width, height), Colors.White);
-        }
-    }
-
-    public void Swap(int[] arr, int i, int j)
-    {
-        if (i != j)
-        {
-            arr[i] ^= arr[j];
-            arr[j] ^= arr[i];
-            arr[i] ^= arr[j];
         }
     }
 }

@@ -43,7 +43,7 @@ offset_right = 160.0
 offset_bottom = 71.0
 min_value = 5.0
 max_value = 100000.0
-value = 100.0
+value = 50.0
 prefix = "N:"
 
 [node name="SpeedDown" type="Button" parent="Container"]
