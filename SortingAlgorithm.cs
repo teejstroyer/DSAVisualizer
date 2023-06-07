@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SAG = SortingAlgorithmDictionary;
@@ -11,7 +12,7 @@ public partial class SortingAlgorithm : Node2D
     [Export] public bool UseViewPortSize { get; set; } = true;
     [Export] public Vector2 Size { get; set; } = new Vector2 { X = 300, Y = 300 };
     [Export] public Label StatLabel { get; set; }
-    [Export] public bool CompareSwaps { get; set; }
+    [Export] public bool CompareSwapsOnly { get; set; }
     [Export] public double DelayInSeconds { get; set; } = .25;
     [Export] public Button SpeedDownButton { get; set; }
     [Export] public Button SpeedUpButton { get; set; }
@@ -23,10 +24,7 @@ public partial class SortingAlgorithm : Node2D
     private float _width;
     private float _height;
     private int[] _data = new int[0];
-    private int _pointer1 = 0;
-    private int _pointer2 = 0;
-    private int _swapCount = 0;
-    private int _compareCount = 0;
+    private List<int> _pointers = new List<int>();
 
     public override void _Ready()
     {
@@ -71,10 +69,10 @@ public partial class SortingAlgorithm : Node2D
 
         SwapsOrComparisons.AddItem("Swaps");
         SwapsOrComparisons.AddItem("Comparisons");
-        SwapsOrComparisons.Selected = CompareSwaps ? 0 : 1;
+        SwapsOrComparisons.Selected = CompareSwapsOnly ? 0 : 1;
         SwapsOrComparisons.ItemSelected += (long index) =>
         {
-            CompareSwaps = index == 0;
+            CompareSwapsOnly = index == 0;
             if (Enum.TryParse(AlgorithmList.Text, out SortingAlgorithmType algorithmType))
             {
                 Reset(algorithmType);
@@ -90,29 +88,16 @@ public partial class SortingAlgorithm : Node2D
         };
     }
 
-    private void UpdatePointers(int i, int j)
+
+    private void HandleDraw(int[] i)
     {
-        (_pointer1, _pointer2) = (i, j);
-        StatLabel.Text = $"{AlgorithmList.Text} Swaps:{_swapCount,2} Comparisons:{_compareCount,2}";
+        _pointers.Clear();
+        _pointers.AddRange(i);
+        Task.Delay((int)(DelayInSeconds * 1000)).Wait();
         QueueRedraw();
     }
 
-    private void HandleSwap(int i, int j)
-    {
-        Task.Delay((int)(DelayInSeconds * 1000)).Wait();
-        _data.Swap(i, j);
-        _swapCount++;
-        UpdatePointers(i, j);
-    }
-
-    private void HandleComparison(int i, int j)
-    {
-        Task.Delay((int)(DelayInSeconds * 1000)).Wait();
-        _compareCount++;
-        UpdatePointers(i, j);
-    }
-
-    private void InitializeDataAndShuffle()
+    private void InitializeArrayAndShuffle()
     {
         _data = Enumerable.Range(0, N).ToArray();
         var random = new Random();
@@ -129,25 +114,18 @@ public partial class SortingAlgorithm : Node2D
     {
         if (_algorithm != null)
         {
-            _algorithm.Swapped -= HandleSwap;
-            _algorithm.Compared -= HandleComparison;
+            _algorithm.ShouldDraw -= HandleDraw;
         }
 
-        InitializeDataAndShuffle();
+        InitializeArrayAndShuffle();
 
-        _pointer1 = 0;
-        _pointer2 = 0;
-        _swapCount = 0;
-        _compareCount = 0;
+        _pointers.Clear();
 
         if (algorithmType != SortingAlgorithmType.None)
         {
             _algorithm = SAG.Instance[algorithmType];
-
-            _algorithm.Swapped += HandleSwap;
-            if (!CompareSwaps) _algorithm.Compared += HandleComparison;
-
-            Task.Run(() => _algorithm.Sort(_data.Clone() as int[], _data.Length)).ConfigureAwait(false);
+            _algorithm.ShouldDraw += HandleDraw;
+            Task.Run(() => _algorithm.Sort(_data, _data.Length, !CompareSwapsOnly)).ConfigureAwait(false);
         }
         else
         {
@@ -171,7 +149,7 @@ public partial class SortingAlgorithm : Node2D
             var x = i * (width + spacer);
             var y = _height - height;
 
-            if (i == _pointer1 || i == _pointer2)
+            if (_pointers.Contains(i))
             {
                 DrawRect(new Rect2((float)x - (float)spacer, 0, (float)width + (float)(2 * spacer), _height), Colors.Red);
             }

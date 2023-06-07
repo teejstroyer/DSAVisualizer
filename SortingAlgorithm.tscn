@@ -11,7 +11,6 @@ CountInput = NodePath("Container/CountInput")
 ResetButton = NodePath("Container/ResetButton")
 Size = Vector2(1000, 500)
 StatLabel = NodePath("Container/Label")
-CompareSwaps = true
 DelayInSeconds = 0.1
 SpeedDownButton = NodePath("Container/SpeedDown")
 SpeedUpButton = NodePath("Container/SpeedUp")

@@ -1,10 +1,9 @@
 
 public class BubbleSort : ISortingAlgorithm
 {
-    public event Notify Swapped;
-    public event Notify Compared;
+    public event Notify ShouldDraw;
 
-    public void Sort(int[] arr, int n)
+    public void Sort(int[] arr, int n, bool notifyComparisons = false)
     {
         int i, j;
         bool swapped;
@@ -13,13 +12,12 @@ public class BubbleSort : ISortingAlgorithm
             swapped = false;
             for (j = 0; j < n - i - 1; j++)
             {
-                Compared?.Invoke(j, j + 1);
+                if (notifyComparisons) ShouldDraw?.Invoke(new[] { j, j + 1 });
 
                 if (arr[j] > arr[j + 1])
                 {
-
                     arr.Swap(j, j + 1);
-                    Swapped?.Invoke(j, j + 1);
+                    ShouldDraw?.Invoke(new[] { j, j + 1 });
                     swapped = true;
                 }
             }

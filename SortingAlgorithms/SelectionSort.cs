@@ -1,9 +1,8 @@
 public class SelectionSort : ISortingAlgorithm
 {
-    public event Notify Swapped;
-    public event Notify Compared;
+    public event Notify ShouldDraw;
 
-    public void Sort(int[] arr, int n)
+    public void Sort(int[] arr, int n, bool notifyComparisons = false)
     {
         for (int i = 0; i < n - 1; i++)
         {
@@ -11,15 +10,15 @@ public class SelectionSort : ISortingAlgorithm
 
             for (int j = i + 1; j < n; j++)
             {
-                Compared?.Invoke(j, min);
+                if (notifyComparisons) ShouldDraw?.Invoke(new int[] { j, min });
                 if (arr[j] < arr[min]) min = j;
             }
 
-            Compared?.Invoke(i, min);
+            if (notifyComparisons) ShouldDraw?.Invoke(new int[] { i, min });
             if (min != i)
             {
                 arr.Swap(i, min);
-                Swapped?.Invoke(i, min);
+                ShouldDraw?.Invoke(new int[] { i, min });
             }
         }
     }

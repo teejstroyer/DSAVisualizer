@@ -1,9 +1,8 @@
-public delegate void Notify(int i, int j);
+public delegate void Notify(int[] i);
 
 public interface ISortingAlgorithm
 {
-    public void Sort(int[] arr, int n);
-    public event Notify Swapped;
-    public event Notify Compared;
+    public void Sort(int[] arr, int n, bool notifyComparisons = false);
+    public event Notify ShouldDraw;
 }
 
